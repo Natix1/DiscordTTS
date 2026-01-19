@@ -4,12 +4,7 @@ import tempfile
 import discord
 import app_shared
 
-from kokoro_onnx import Kokoro
-
-kokoro = Kokoro(
-    model_path="models/kokoro-v1.0.onnx",
-    voices_path="models/voices-v1.0.bin",
-)
+from app_shared import kokoro
 
 
 # most of this math jargon is written by mr gpt because uh just look for yourself
@@ -17,20 +12,37 @@ kokoro = Kokoro(
 # its scary
 # it freaks me out
 # but works
+
+previous_id = -1
+
+
 async def tts_worker():
     while True:
-        queued = await app_shared.tts_queue.get()
+        message = await app_shared.tts_queue.get()
 
         try:
             vc = app_shared.voice_client
             if vc is None or not vc.is_connected():
-                await app_shared.error_message_reply(
-                    queued.discord_message, "not connected to vc"
-                )
+                await app_shared.error_message_reply(message, "not connected to vc")
                 continue
 
-            await app_shared.set_reaction(queued.discord_message, "🔃")
-            audio, sample_rate = kokoro.create(queued.text, "am_adam", 1.0, "en-us")
+            if not app_shared.current_voice:
+                await app_shared.error_message_reply(message, "no voice selected")
+                continue
+
+            full_text: str
+            if message.author.id == previous_id:
+                full_text = message.content
+            else:
+                full_text = f"{message.author.display_name} said: {message.content}"
+
+            await app_shared.set_reaction(message, "🔃")
+            audio, sample_rate = kokoro.create(
+                full_text,
+                app_shared.current_voice,
+                app_shared.voice_speed,
+                "en-us",
+            )
             if audio.size == 0:
                 continue
 
@@ -43,14 +55,14 @@ async def tts_worker():
                 wf.writeframes((audio * 32767).astype("int16").tobytes())
 
             source = discord.FFmpegPCMAudio(temp_path)
-            await app_shared.set_reaction(queued.discord_message, "🔊")
+            await app_shared.set_reaction(message, "🔊")
             vc.play(source)
 
             while vc.is_playing():
                 await asyncio.sleep(0.05)
 
-            await app_shared.set_reaction(queued.discord_message, "✅")
+            await app_shared.set_reaction(message, "✅")
         except Exception as e:
             await app_shared.error_message_reply(
-                queued.discord_message, f"failed replying to message. error: {e}"
+                message, f"failed replying to message. error: {e}"
             )
