@@ -1,13 +1,7 @@
-import app_shared
 import discord
-import atexit
+import app_shared
 
-from typing import Optional
-
-
-class QueuedTTS:
-    text: str
-    discord_message: discord.Message
+from bot_worker import has_access
 
 
 class BotWorker(discord.Client):
@@ -33,8 +27,14 @@ class BotWorker(discord.Client):
         if message.author == self.user:
             return
 
+        if not message.author:
+            return
+
         parts = message.content.split(" ")
         if parts[0].lower() == "!join":
+            if not has_access(message.author):
+                return
+
             if not (
                 isinstance(message.channel, discord.channel.GroupChannel)
                 or isinstance(message.channel, discord.channel.VoiceChannel)
@@ -63,6 +63,9 @@ class BotWorker(discord.Client):
             await self.reply_with_bound_to(message)
 
         elif parts[0].lower() == "!bind":
+            if not has_access(message.author):
+                return
+
             if len(parts) < 2:
                 await app_shared.error_message_reply(message, "not enough params")
                 return
@@ -71,6 +74,9 @@ class BotWorker(discord.Client):
             await self.reply_with_bound_to(message)
 
         elif parts[0].lower() == "!unbind":
+            if not has_access(message.author):
+                return
+
             if len(parts) < 2:
                 await app_shared.error_message_reply(message, "not enough params")
                 return
@@ -89,6 +95,9 @@ class BotWorker(discord.Client):
             await self.reply_with_bound_to(message)
 
         elif parts[0].lower() == "!disconnect":
+            if not has_access(message.author):
+                return
+
             if self.voice_client is not None:
                 await self.voice_client.disconnect(force=True)
                 await app_shared.set_reaction(message, "✅")
@@ -96,6 +105,9 @@ class BotWorker(discord.Client):
             self.bound_to.clear()
 
         elif parts[0].lower() == "!bound":
+            if not has_access(message.author):
+                return
+
             await self.reply_with_bound_to(message)
 
         elif message.author.id in self.bound_to:
@@ -104,3 +116,8 @@ class BotWorker(discord.Client):
             queued.discord_message = message
 
             await app_shared.tts_queue.put(queued)
+
+
+class QueuedTTS:
+    text: str
+    discord_message: discord.Message

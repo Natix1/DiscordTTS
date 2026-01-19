@@ -4,6 +4,8 @@ import app_shared
 from tts_worker import tts_worker
 from bot_worker import discord_bot_worker
 
+# THIS NEEDS PYTHON 3.13
+
 
 async def main():
     tts_task = asyncio.create_task(tts_worker())
