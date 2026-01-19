@@ -44,7 +44,7 @@ kokoro = Kokoro(
     voices_path="models/voices-v1.0.bin",
 )
 current_voice: Optional[str] = "bm_lewis"
-voice_speed: float = 1
+voice_speed: float = 1.0
 
 all_voices = []
 for voice in kokoro.voices:
@@ -64,7 +64,7 @@ async def set_reaction_yield(message: discord.Message, reaction: str):
 
 
 async def set_reaction(message: discord.Message, reaction: str):
-    asyncio.create_task(set_reaction(message, reaction))
+    asyncio.create_task(set_reaction_yield(message, reaction))
 
 
 async def error_message_reply_yield(message: discord.Message, error_message: str):

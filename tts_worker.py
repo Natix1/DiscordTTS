@@ -13,8 +13,6 @@ from app_shared import kokoro
 # it freaks me out
 # but works
 
-previous_id = -1
-
 
 async def tts_worker():
     while True:
@@ -30,15 +28,13 @@ async def tts_worker():
                 await app_shared.error_message_reply(message, "no voice selected")
                 continue
 
-            full_text: str
-            if message.author.id == previous_id:
-                full_text = message.content
-            else:
-                full_text = f"{message.author.display_name} said: {message.content}"
+            if len(message.content) < 1:
+                await app_shared.error_message_reply(message, "too short")
+                continue
 
             await app_shared.set_reaction(message, "🔃")
             audio, sample_rate = kokoro.create(
-                full_text,
+                message.content,
                 app_shared.current_voice,
                 app_shared.voice_speed,
                 "en-us",

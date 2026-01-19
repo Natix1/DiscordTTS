@@ -124,7 +124,7 @@ async def bound(ctx: commands.Context):
 @discord_bot.command(name="voices", description="Lists all available voices.")
 @is_allowed_user()
 async def voices(ctx: commands.Context):
-    await ctx.reply(",".join(app_shared.all_voices))
+    await ctx.reply(", ".join(app_shared.all_voices))
 
 
 @discord_bot.command(name="setvoice", description="Sets the current voice.")
