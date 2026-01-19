@@ -45,6 +45,7 @@ kokoro = Kokoro(
 )
 current_voice: Optional[str] = "bm_lewis"
 voice_speed: float = 1.0
+next_requested: bool = False
 
 all_voices = []
 for voice in kokoro.voices:

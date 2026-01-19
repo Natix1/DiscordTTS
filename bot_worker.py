@@ -209,7 +209,7 @@ async def reactions_off(ctx: commands.Context):
     app_shared.REACTIONS_ENABLED = False
 
 
-@discord_bot.command(name="commands", description="Lists all commands")
+@discord_bot.command(name="commands", description="Lists all commands.")
 @is_allowed_user()
 async def commands_command(ctx: commands.Context):
     full_str = ""
@@ -225,6 +225,24 @@ async def commands_command(ctx: commands.Context):
         index += 1
 
     await ctx.reply(full_str)
+
+
+@discord_bot.command(name="cancel", description="Cancels current TTS.")
+@is_allowed_user()
+async def cancel(ctx: commands.Context):
+    while not app_shared.tts_queue.empty():
+        app_shared.tts_queue.get_nowait()
+        app_shared.tts_queue.task_done()
+
+    app_shared.next_requested = True
+    await app_shared.set_reaction(ctx.message, "✅")
+
+
+@discord_bot.command(name="next", description="Skips to next queued TTS.")
+@is_allowed_user()
+async def next(ctx: commands.Context):
+    app_shared.next_requested = True
+    await app_shared.set_reaction(ctx.message, "✅")
 
 
 @discord_bot.event

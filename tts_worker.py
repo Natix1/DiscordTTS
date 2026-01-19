@@ -17,6 +17,7 @@ from app_shared import kokoro
 async def tts_worker():
     while True:
         message = await app_shared.tts_queue.get()
+        app_shared.next_requested = False
 
         try:
             vc = app_shared.voice_client
@@ -55,6 +56,10 @@ async def tts_worker():
             vc.play(source)
 
             while vc.is_playing():
+                if app_shared.next_requested:
+                    vc.stop()
+                    break
+
                 await asyncio.sleep(0.05)
 
             await app_shared.set_reaction(message, "✅")
@@ -62,3 +67,5 @@ async def tts_worker():
             await app_shared.error_message_reply(
                 message, f"failed replying to message. error: {e}"
             )
+
+        app_shared.tts_queue.task_done()
